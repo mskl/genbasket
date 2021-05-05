@@ -1,11 +1,18 @@
-FROM python:3.8-buster
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
-# Code is copied on build. In development, we mount a local folder over a copied one.
-COPY ../requirements.txt /app/requirements.txt
+RUN apt-get update && apt-get install --no-install-recommends -y libpq-dev build-essential curl htop vim git wget \
+ python3-dev python3-pip python3-setuptools python3-numpy cython cython3 libblas-dev libatlas-base-dev task-spooler \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Folder where the code will be
 WORKDIR /app
 
-RUN apt-get update -y
-RUN apt-get install -y --no-install-recommends build-essential gcc libsndfile1 
+COPY ./requirements.txt /app/requirements.txt
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+
+# Copy the contents of the app into target folder
+COPY ${PROJECT_FOLDER}/ /app/
+
+# For CUDA profiling, TensorFlow requires CUPTI.
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH

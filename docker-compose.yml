@@ -1,10 +1,19 @@
-version: '3'
+version: '2.4'
 services:
-  popcorn:
+  jupyter:
     build: .
+    env_file:
+      - .env
     ports:
-      - 8888:8888
+      - "${JUPYTER_PORT}:${JUPYTER_PORT}"
+      - "${TENSORBOARD_PORT}:${TENSORBOARD_PORT}"
+    command: bash -c "
+        jupyter notebook --ip=0.0.0.0 --port=${JUPYTER_PORT} --allow-root &
+        tensorboard --logdir=/logs --port=${TENSORBOARD_PORT} --bind_all --reload_multifile=true
+      "
     volumes:
-      - "./:/app"
-    command: bash -c "jupyter notebook --ip=0.0.0.0 --port=8888 --allow-root"
+      - "${PROJECT_FOLDER}:/app"
+      - "./data/:/data"
+      - "./logs/:/logs"
+    mem_limit: "${DOCKER_MEM_LIMIT}"
     restart: always
